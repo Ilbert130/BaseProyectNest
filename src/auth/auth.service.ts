@@ -5,13 +5,16 @@ import { User } from './entities/user.entity';
 import { Model } from 'mongoose';
 import * as bcrypt from "bcrypt"; 
 import { LoginUserDto } from './dto/login-user.dto';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
 
   constructor(
     @InjectModel(User.name)
-    private readonly userModel: Model<User>
+    private readonly userModel: Model<User>,
+    private readonly jwtService: JwtService
   ){}
 
   //Create user
@@ -26,7 +29,8 @@ export class AuthService {
       })
 
       return {
-        user
+        user,
+        token: this.getJwtToken({id:user._id})
       }
       
     } catch (error) {
@@ -53,8 +57,29 @@ export class AuthService {
     return {
       id: user._id,
       email:user.email,
-      password:user.password
+      password:user.password,
+      token: this.getJwtToken({id:user._id})
     };
+  }
+
+  async checkAuthStatus(user:User){
+
+    const {id, email, password, fullName} = user;
+
+    return {
+      id,
+      email,
+      password,
+      fullName,
+      token: this.getJwtToken({id:user._id})
+    }
+  }
+
+  private getJwtToken(payload:JwtPayload){
+
+    //generating the token
+    const token = this.jwtService.sign(payload);
+    return token;
   }
 
   private handleDbErrors(error:any):never {
