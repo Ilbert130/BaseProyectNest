@@ -40,7 +40,7 @@ export class AuthService {
     
     const {password, email} = loginUserDto;
 
-    const user = await this.userModel.findOne({email});
+    const user = await this.userModel.findOne({email}, '_id email password').exec();
 
     if(!user){
       throw new UnauthorizedException('Credentials are not valid (email)');
@@ -51,6 +51,7 @@ export class AuthService {
     }
 
     return {
+      id: user._id,
       email:user.email,
       password:user.password
     };
